@@ -25,21 +25,53 @@ Automated Ansible configuration for Ubuntu development environments with XFCE de
 
 ## Quick Start
 
-### One-Line Install (from SSH)
+This automation can be deployed in multiple ways depending on your environment:
 
-Connect to your Ubuntu system via SSH and run:
+### Quick Reference: Choose Your Deployment Method
 
-**Interactive mode** (prompts for confirmation):
+| Your Situation | Command to Use | Notes |
+|----------------|----------------|-------|
+| SSH with interactive terminal | `curl -fsSL ... \| sudo bash` | You'll be prompted to confirm |
+| Azure Bastion | `curl -fsSL ... \| sudo bash -s -- --yes` | **Must** use `--yes` flag |
+| Jump/Bastion server | `curl -fsSL ... \| sudo bash -s -- --yes` | Use `--yes` for automation |
+| CI/CD pipeline | `curl -fsSL ... \| sudo bash -s -- --yes` | Use `--yes` for automation |
+| Custom configuration needed | Clone repo, edit `group_vars/all.yml`, run `./bootstrap.sh --yes` | Recommended for production |
+
+### Deployment Scenarios
+
+#### Scenario 1: Direct SSH Connection (Interactive)
+
+When you have direct SSH access to the target Ubuntu VM and want to review settings before proceeding:
+
 ```bash
+# Connect to your Ubuntu system
+ssh user@target-system
+
+# Run with interactive confirmation
 curl -fsSL https://raw.githubusercontent.com/themccomasunit/ubuntu-workstation-setup/main/bootstrap.sh | sudo bash
 ```
 
-**Non-interactive mode** (for bastion hosts, automation, or scripts):
+**Use this when:** You're manually setting up a single system and want to confirm before installation.
+
+#### Scenario 2: Azure Bastion or Jump Server (Non-Interactive)
+
+When deploying from Azure Bastion, a jump server, or any automated pipeline where interactive prompts aren't supported:
+
 ```bash
+# Connect via Azure Bastion or SSH
+ssh user@target-system
+
+# Run with auto-approval (no prompts)
 curl -fsSL https://raw.githubusercontent.com/themccomasunit/ubuntu-workstation-setup/main/bootstrap.sh | sudo bash -s -- --yes
 ```
 
-**Important:** Both options use default settings. For production use, customize the configuration first (see Manual Installation below).
+**Use this when:**
+- Connecting through Azure Bastion
+- Running from CI/CD pipelines
+- Automating deployments to multiple systems
+- Any non-interactive terminal session
+
+**Important:** Both quick-start options use default settings including the default RDP password. For production use, customize the configuration first (see Manual Installation below).
 
 ### Manual Installation (Recommended)
 
@@ -163,63 +195,133 @@ If you need Azure access:
 az login
 ```
 
-## Usage from Bastion Host
+## Advanced Deployment Scenarios
 
-This setup is ideal for deployment via bastion hosts or jump servers:
+### Azure Bastion Deployment
 
-### Option 1: Direct Deployment (Non-Interactive)
+Azure Bastion provides secure browser-based SSH access without exposing SSH ports. This automation works seamlessly with Azure Bastion.
+
+#### Option 1: Quick Deploy via Azure Bastion (Default Settings)
+
+1. Connect to your Ubuntu VM via Azure Bastion in Azure Portal
+2. Open the terminal and run:
 
 ```bash
-# SSH to your target Ubuntu system
-ssh user@target-system
-
-# Run the bootstrap script with auto-approval
+# The --yes flag is REQUIRED for Azure Bastion (non-interactive session)
 curl -fsSL https://raw.githubusercontent.com/themccomasunit/ubuntu-workstation-setup/main/bootstrap.sh | sudo bash -s -- --yes
 ```
 
-### Option 2: Custom Configuration
+**Why `--yes` is required:** Azure Bastion sessions are non-interactive by default, so the script will fail without auto-approval.
+
+#### Option 2: Custom Configuration via Azure Bastion
+
+For production deployments with custom settings:
 
 ```bash
-# SSH to target system
-ssh user@target-system
-
-# Clone and customize
+# Clone repository
 git clone https://github.com/themccomasunit/ubuntu-workstation-setup.git
 cd ubuntu-workstation-setup
 
-# Edit configuration (IMPORTANT: change RDP password!)
+# Customize your configuration
 nano group_vars/all.yml
+# Update: git_user_name, git_user_email, rdp_user, rdp_password
 
-# Run with auto-approval flag
+# Run with auto-approval
 sudo ./bootstrap.sh --yes
 ```
 
-### Option 3: Automated Multi-Host Deployment
+### Jump Server / Bastion Host Deployment
 
-Create a deployment script on your bastion:
+#### Option 1: Direct One-Command Deployment
+
+From your bastion/jump server:
 
 ```bash
-#!/bin/bash
-TARGET_HOST=$1
-RDP_PASSWORD=$2
+# SSH to target and deploy in one command
+ssh user@target-system "curl -fsSL https://raw.githubusercontent.com/themccomasunit/ubuntu-workstation-setup/main/bootstrap.sh | sudo bash -s -- --yes"
+```
 
-ssh $TARGET_HOST << 'ENDSSH'
+#### Option 2: Remote Configuration with Custom Settings
+
+Deploy with custom RDP password from your bastion:
+
+```bash
+ssh user@target-system << 'ENDSSH'
+  # Clone repository
   git clone https://github.com/themccomasunit/ubuntu-workstation-setup.git
   cd ubuntu-workstation-setup
 
-  # Update password in config
-  sudo sed -i "s/ChangeMe123!/${RDP_PASSWORD}/g" group_vars/all.yml
+  # Update configuration
+  sed -i 's/rdp_password: "ChangeMe123!"/rdp_password: "YourSecurePassword123!"/g' group_vars/all.yml
+  sed -i 's/git_user_name: "Your Name"/git_user_name: "John Doe"/g' group_vars/all.yml
+  sed -i 's/git_user_email: "your.email@example.com"/git_user_email: "john.doe@company.com"/g' group_vars/all.yml
 
-  # Run setup with auto-approval
+  # Run with auto-approval
   sudo ./bootstrap.sh --yes
 ENDSSH
 ```
 
-Usage:
+#### Option 3: Multi-Host Deployment Script
+
+Create a deployment script for managing multiple Ubuntu workstations:
+
+```bash
+#!/bin/bash
+# deploy-workstation.sh
+# Usage: ./deploy-workstation.sh <target-host> <rdp-password> <git-name> <git-email>
+
+TARGET_HOST=$1
+RDP_PASSWORD=$2
+GIT_NAME=${3:-"Default User"}
+GIT_EMAIL=${4:-"user@example.com"}
+
+if [ -z "$TARGET_HOST" ] || [ -z "$RDP_PASSWORD" ]; then
+    echo "Usage: $0 <target-host> <rdp-password> [git-name] [git-email]"
+    exit 1
+fi
+
+echo "Deploying to: $TARGET_HOST"
+
+ssh "$TARGET_HOST" bash -s -- "$RDP_PASSWORD" "$GIT_NAME" "$GIT_EMAIL" << 'ENDSSH'
+  RDP_PASSWORD=$1
+  GIT_NAME=$2
+  GIT_EMAIL=$3
+
+  # Clone repository
+  git clone https://github.com/themccomasunit/ubuntu-workstation-setup.git
+  cd ubuntu-workstation-setup
+
+  # Update configuration with provided values
+  sed -i "s/rdp_password: \"ChangeMe123!\"/rdp_password: \"${RDP_PASSWORD}\"/g" group_vars/all.yml
+  sed -i "s/git_user_name: \"Your Name\"/git_user_name: \"${GIT_NAME}\"/g" group_vars/all.yml
+  sed -i "s/git_user_email: \"your.email@example.com\"/git_user_email: \"${GIT_EMAIL}\"/g" group_vars/all.yml
+
+  # Run setup with auto-approval
+  sudo ./bootstrap.sh --yes
+
+  echo "Deployment complete! System will need to be rebooted."
+ENDSSH
+
+echo "Deployment script completed for $TARGET_HOST"
+```
+
+Make it executable and use:
 ```bash
 chmod +x deploy-workstation.sh
-./deploy-workstation.sh user@target-system "YourSecurePassword123!"
+./deploy-workstation.sh user@vm1.example.com "SecurePass123!" "John Doe" "john@company.com"
+./deploy-workstation.sh user@vm2.example.com "SecurePass456!" "Jane Smith" "jane@company.com"
 ```
+
+### Arguments Reference
+
+The bootstrap script supports the following arguments:
+
+| Argument | Description | Required For |
+|----------|-------------|--------------|
+| `--yes` or `-y` | Auto-approve installation without prompts | Azure Bastion, CI/CD, Non-interactive sessions |
+| (none) | Interactive mode with confirmation prompt | Direct SSH with terminal |
+
+**Key Point:** If you see an error like "Non-interactive session detected", you MUST add the `--yes` flag.
 
 ## Firewall Configuration
 
