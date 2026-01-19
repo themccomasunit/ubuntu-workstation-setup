@@ -1,6 +1,6 @@
 # Ubuntu Workstation Setup
 
-Automated Ansible configuration for Ubuntu development environments with MATE desktop and RDP support. This is the Ubuntu equivalent of the [Windows Workstation Setup](https://github.com/themccomasunit/windows-workstation-setup) repository.
+Automated Ansible configuration for Ubuntu development environments with XFCE desktop and RDP support. This is the Ubuntu equivalent of the [Windows Workstation Setup](https://github.com/themccomasunit/windows-workstation-setup) repository.
 
 ## What Gets Installed
 
@@ -14,14 +14,14 @@ Automated Ansible configuration for Ubuntu development environments with MATE de
 - **Azure CLI** - Command-line interface for Azure
 
 ### Desktop Environment
-- **Ubuntu MATE Desktop** - Lightweight, traditional desktop environment
+- **XFCE Desktop** - Lightweight desktop environment optimized for RDP performance
 - **LightDM** - Display manager
 - **xrdp** - Remote Desktop Protocol server for remote access
 
 ### User Configuration
 - **RDP User** - Dedicated user account for remote desktop access
 - **Git Configuration** - Pre-configured with your name and email
-- **Desktop Session** - Properly configured MATE session for RDP
+- **Desktop Session** - Properly configured XFCE session for RDP
 
 ## Quick Start
 
@@ -102,8 +102,8 @@ git_user_email: "your.email@example.com"
 rdp_user: "rdpuser"
 rdp_password: "ChangeMe123!"  # CHANGE THIS!
 
-# Desktop environment
-desktop_environment: "ubuntu-mate-desktop"
+# Desktop environment (XFCE for better RDP performance)
+desktop_environment: "xfce4"
 ```
 
 ### Security Best Practices
@@ -277,8 +277,10 @@ Edit [roles/software/tasks/main.yml](roles/software/tasks/main.yml) and add task
 Edit [group_vars/all.yml](group_vars/all.yml):
 
 ```yaml
-desktop_environment: "ubuntu-desktop"  # or "xubuntu-desktop", "kubuntu-desktop"
+desktop_environment: "ubuntu-desktop"  # or "ubuntu-mate-desktop", "kubuntu-desktop"
 ```
+
+**Note:** XFCE is recommended for best RDP performance. MATE and GNOME can be sluggish over RDP connections.
 
 ### Skipping Desktop/RDP Installation
 
@@ -298,7 +300,7 @@ roles:
 |---------|--------------|--------------|
 | Configuration Method | PowerShell | Ansible |
 | Package Manager | winget | apt |
-| Desktop Environment | Windows UI | Ubuntu MATE |
+| Desktop Environment | Windows UI | XFCE |
 | Remote Access | Built-in RDP | xrdp |
 | Automation Approach | PowerShell scripts | Ansible playbooks |
 | One-line Install | ✅ Bootstrap script | ✅ Bootstrap script |
@@ -331,8 +333,9 @@ sudo ansible-playbook playbook.yml
 ## Performance Considerations
 
 - **Headless Mode:** If you don't need GUI, skip desktop/RDP roles to save ~2GB RAM
-- **Lightweight Alternative:** Consider XFCE instead of MATE for lower resource usage
-- **Cloud Optimization:** For cloud VMs, consider using X2Go instead of RDP for better performance
+- **XFCE Optimization:** XFCE is already configured for optimal RDP performance
+- **Resource Usage:** XFCE uses ~300-400MB RAM vs MATE's ~500-600MB or GNOME's ~800MB+
+- **Cloud Optimization:** For cloud VMs, consider using X2Go instead of RDP for even better performance over high-latency connections
 
 ## Security Notes
 

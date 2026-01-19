@@ -3,7 +3,7 @@
 # Ubuntu Workstation Setup - Bootstrap Script
 #
 # This script can be run directly from an SSH session to set up an Ubuntu
-# workstation with MATE desktop, RDP access, and development tools.
+# workstation with XFCE desktop, RDP access, and development tools.
 #
 # Usage:
 #   curl -fsSL https://raw.githubusercontent.com/themccomasunit/ubuntu-workstation-setup/main/bootstrap.sh | bash
@@ -130,7 +130,7 @@ if [ $PLAYBOOK_EXIT_CODE -eq 0 ]; then
 
 Your Ubuntu workstation has been configured with:
   - Development tools (Git, GitHub CLI, VS Code, Python, Azure CLI, Chrome)
-  - Ubuntu MATE Desktop Environment
+  - XFCE Desktop Environment (optimized for RDP performance)
   - RDP access via xrdp (port 3389)
 
 Post-Installation Steps:

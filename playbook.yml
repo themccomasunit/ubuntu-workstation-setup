@@ -1,6 +1,6 @@
 ---
 # Ubuntu Workstation Setup Playbook
-# Automated installation and configuration of development tools with MATE desktop and RDP
+# Automated installation and configuration of development tools with XFCE desktop and RDP
 
 - name: Configure Ubuntu Workstation
   hosts: localhost
@@ -25,7 +25,7 @@
           ║                                                               ║
           ║  Your system has been configured with:                        ║
           ║  - Development tools (Git, Python, VS Code, etc.)             ║
-          ║  - Ubuntu MATE Desktop Environment                            ║
+          ║  - XFCE Desktop Environment (optimized for RDP)               ║
           ║  - RDP access via xrdp                                        ║
           ║                                                               ║
           ║  You can now connect via RDP to this system!                  ║

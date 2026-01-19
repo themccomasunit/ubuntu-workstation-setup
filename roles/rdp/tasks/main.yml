@@ -14,14 +14,14 @@
     enabled: yes
     state: started
 
-- name: Configure xrdp to use MATE desktop
+- name: Configure xrdp to use XFCE desktop
   lineinfile:
     path: /etc/xrdp/startwm.sh
     insertbefore: '^test -x /etc/X11/Xsession'
     line: |
-      # Start MATE desktop
-      export DESKTOP_SESSION=mate
-      export XDG_CURRENT_DESKTOP=MATE
+      # Start XFCE desktop
+      export DESKTOP_SESSION=xfce
+      export XDG_CURRENT_DESKTOP=XFCE
     state: present
 
 - name: Allow RDP through firewall (if ufw is active)
@@ -54,9 +54,9 @@
   copy:
     content: |
       #!/bin/bash
-      export DESKTOP_SESSION=mate
-      export XDG_CURRENT_DESKTOP=MATE
-      exec mate-session
+      export DESKTOP_SESSION=xfce
+      export XDG_CURRENT_DESKTOP=XFCE
+      exec startxfce4
     dest: "/home/{{ rdp_user }}/.xsessionrc"
     owner: "{{ rdp_user }}"
     group: "{{ rdp_user }}"

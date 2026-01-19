@@ -1,12 +1,13 @@
 ---
-# Desktop environment installation - Ubuntu MATE
+# Desktop environment installation - XFCE (optimized for RDP performance)
 
-- name: Install Ubuntu MATE desktop environment
+- name: Install XFCE desktop environment
   apt:
     name:
-      - ubuntu-mate-desktop
-      - ubuntu-mate-core
+      - xfce4
+      - xfce4-goodies
       - lightdm
+      - lightdm-gtk-greeter
     state: present
   register: desktop_install
 
@@ -30,15 +31,15 @@
     enabled: yes
   ignore_errors: yes
 
-- name: Create .xsessionrc for MATE
+- name: Create .xsessionrc for XFCE
   copy:
     content: |
       #!/bin/bash
-      export DESKTOP_SESSION=mate
-      export XDG_CURRENT_DESKTOP=MATE
+      export DESKTOP_SESSION=xfce
+      export XDG_CURRENT_DESKTOP=XFCE
     dest: /etc/skel/.xsessionrc
     mode: '0755'
 
 - name: Display desktop installation status
   debug:
-    msg: "Ubuntu MATE desktop environment has been installed successfully"
+    msg: "XFCE desktop environment has been installed successfully"

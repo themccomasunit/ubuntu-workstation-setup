@@ -12,5 +12,5 @@ rdp_password: "ChangeMe123!"  # CHANGE THIS TO A SECURE PASSWORD!
 # Software versions (can be overridden)
 python_version: "3.13"
 
-# Desktop environment
-desktop_environment: "ubuntu-mate-desktop"
+# Desktop environment (XFCE for better RDP performance)
+desktop_environment: "xfce4"
