@@ -66,8 +66,8 @@ source /etc/lsb-release
 print_status "Detected: $DISTRIB_DESCRIPTION"
 
 # Update package lists
-print_status "Updating package lists..."
-apt-get update -qq
+print_status "Updating package lists (this may take a few minutes)..."
+apt-get update -q
 
 # Install Ansible if not present
 if ! command -v ansible-playbook &> /dev/null; then
