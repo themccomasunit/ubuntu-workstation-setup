@@ -6,13 +6,17 @@
 # workstation with XFCE desktop, RDP access, and development tools.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/themccomasunit/ubuntu-workstation-setup/main/bootstrap.sh | bash
+#   Interactive mode (prompts for confirmation):
+#     curl -fsSL https://raw.githubusercontent.com/themccomasunit/ubuntu-workstation-setup/main/bootstrap.sh | sudo bash
 #
-# Or for custom configuration:
-#   git clone https://github.com/themccomasunit/ubuntu-workstation-setup.git
-#   cd ubuntu-workstation-setup
-#   # Edit group_vars/all.yml with your settings
-#   ./bootstrap.sh
+#   Non-interactive mode (auto-approve):
+#     curl -fsSL https://raw.githubusercontent.com/themccomasunit/ubuntu-workstation-setup/main/bootstrap.sh | sudo bash -s -- --yes
+#
+#   Custom configuration:
+#     git clone https://github.com/themccomasunit/ubuntu-workstation-setup.git
+#     cd ubuntu-workstation-setup
+#     # Edit group_vars/all.yml with your settings
+#     sudo ./bootstrap.sh --yes
 
 set -e
 
@@ -104,11 +108,32 @@ echo ""
 print_warning "Please ensure you have changed the default RDP password!"
 echo ""
 
-# Ask for confirmation
-read -p "Continue with the setup? (yes/no): " CONFIRM
-if [ "$CONFIRM" != "yes" ]; then
-    print_status "Setup cancelled by user"
-    exit 0
+# Check if running with --yes flag or non-interactively
+AUTO_APPROVE=false
+for arg in "$@"; do
+    if [ "$arg" = "--yes" ] || [ "$arg" = "-y" ]; then
+        AUTO_APPROVE=true
+        break
+    fi
+done
+
+# Check if running in a non-interactive session (no TTY)
+if [ ! -t 0 ]; then
+    print_warning "Non-interactive session detected. Use --yes flag to auto-approve."
+    print_warning "Example: curl -fsSL https://...bootstrap.sh | sudo bash -s -- --yes"
+    print_status "Setup cancelled - requires interactive confirmation or --yes flag"
+    exit 1
+fi
+
+# Ask for confirmation in interactive mode
+if [ "$AUTO_APPROVE" = false ]; then
+    read -p "Continue with the setup? (yes/no): " CONFIRM
+    if [ "$CONFIRM" != "yes" ]; then
+        print_status "Setup cancelled by user"
+        exit 0
+    fi
+else
+    print_success "Auto-approval enabled, proceeding with setup..."
 fi
 
 # Run the Ansible playbook

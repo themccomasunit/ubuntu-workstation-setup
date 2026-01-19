@@ -29,11 +29,17 @@ Automated Ansible configuration for Ubuntu development environments with XFCE de
 
 Connect to your Ubuntu system via SSH and run:
 
+**Interactive mode** (prompts for confirmation):
 ```bash
 curl -fsSL https://raw.githubusercontent.com/themccomasunit/ubuntu-workstation-setup/main/bootstrap.sh | sudo bash
 ```
 
-**Important:** This uses default settings. For production use, customize the configuration first (see Manual Installation below).
+**Non-interactive mode** (for bastion hosts, automation, or scripts):
+```bash
+curl -fsSL https://raw.githubusercontent.com/themccomasunit/ubuntu-workstation-setup/main/bootstrap.sh | sudo bash -s -- --yes
+```
+
+**Important:** Both options use default settings. For production use, customize the configuration first (see Manual Installation below).
 
 ### Manual Installation (Recommended)
 
@@ -161,18 +167,58 @@ az login
 
 This setup is ideal for deployment via bastion hosts or jump servers:
 
+### Option 1: Direct Deployment (Non-Interactive)
+
 ```bash
 # SSH to your target Ubuntu system
 ssh user@target-system
 
-# Run the bootstrap script
-curl -fsSL https://raw.githubusercontent.com/themccomasunit/ubuntu-workstation-setup/main/bootstrap.sh | sudo bash
+# Run the bootstrap script with auto-approval
+curl -fsSL https://raw.githubusercontent.com/themccomasunit/ubuntu-workstation-setup/main/bootstrap.sh | sudo bash -s -- --yes
+```
 
-# Or with custom configuration:
+### Option 2: Custom Configuration
+
+```bash
+# SSH to target system
+ssh user@target-system
+
+# Clone and customize
 git clone https://github.com/themccomasunit/ubuntu-workstation-setup.git
 cd ubuntu-workstation-setup
-nano group_vars/all.yml  # Edit configuration
-sudo ./bootstrap.sh
+
+# Edit configuration (IMPORTANT: change RDP password!)
+nano group_vars/all.yml
+
+# Run with auto-approval flag
+sudo ./bootstrap.sh --yes
+```
+
+### Option 3: Automated Multi-Host Deployment
+
+Create a deployment script on your bastion:
+
+```bash
+#!/bin/bash
+TARGET_HOST=$1
+RDP_PASSWORD=$2
+
+ssh $TARGET_HOST << 'ENDSSH'
+  git clone https://github.com/themccomasunit/ubuntu-workstation-setup.git
+  cd ubuntu-workstation-setup
+
+  # Update password in config
+  sudo sed -i "s/ChangeMe123!/${RDP_PASSWORD}/g" group_vars/all.yml
+
+  # Run setup with auto-approval
+  sudo ./bootstrap.sh --yes
+ENDSSH
+```
+
+Usage:
+```bash
+chmod +x deploy-workstation.sh
+./deploy-workstation.sh user@target-system "YourSecurePassword123!"
 ```
 
 ## Firewall Configuration
