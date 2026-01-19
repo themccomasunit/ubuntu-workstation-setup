@@ -1,0 +1,17 @@
+# Ansible
+*.retry
+/tmp/ansible_facts
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local customization (optional - remove if you want to track changes)
+# group_vars/all.yml
+
+# Logs
+*.log

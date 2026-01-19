@@ -1,0 +1,32 @@
+---
+# Ubuntu Workstation Setup Playbook
+# Automated installation and configuration of development tools with MATE desktop and RDP
+
+- name: Configure Ubuntu Workstation
+  hosts: localhost
+  connection: local
+  become: yes
+
+  vars_files:
+    - group_vars/all.yml
+
+  roles:
+    - common
+    - software
+    - desktop
+    - rdp
+
+  post_tasks:
+    - name: Display completion message
+      debug:
+        msg: |
+          ╔═══════════════════════════════════════════════════════════════╗
+          ║            Ubuntu Workstation Setup Complete!                 ║
+          ║                                                               ║
+          ║  Your system has been configured with:                        ║
+          ║  - Development tools (Git, Python, VS Code, etc.)             ║
+          ║  - Ubuntu MATE Desktop Environment                            ║
+          ║  - RDP access via xrdp                                        ║
+          ║                                                               ║
+          ║  You can now connect via RDP to this system!                  ║
+          ╚═══════════════════════════════════════════════════════════════╝

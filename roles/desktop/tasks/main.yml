@@ -1,0 +1,44 @@
+---
+# Desktop environment installation - Ubuntu MATE
+
+- name: Install Ubuntu MATE desktop environment
+  apt:
+    name:
+      - ubuntu-mate-desktop
+      - ubuntu-mate-core
+      - lightdm
+    state: present
+  register: desktop_install
+
+- name: Configure LightDM as default display manager
+  debconf:
+    name: lightdm
+    question: shared/default-x-display-manager
+    value: lightdm
+    vtype: select
+
+- name: Ensure LightDM is enabled and will start on boot
+  systemd:
+    name: lightdm
+    enabled: yes
+    state: started
+  ignore_errors: yes
+
+- name: Set graphical target as default
+  systemd:
+    name: graphical.target
+    enabled: yes
+  ignore_errors: yes
+
+- name: Create .xsessionrc for MATE
+  copy:
+    content: |
+      #!/bin/bash
+      export DESKTOP_SESSION=mate
+      export XDG_CURRENT_DESKTOP=MATE
+    dest: /etc/skel/.xsessionrc
+    mode: '0755'
+
+- name: Display desktop installation status
+  debug:
+    msg: "Ubuntu MATE desktop environment has been installed successfully"

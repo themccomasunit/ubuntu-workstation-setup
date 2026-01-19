@@ -1,0 +1,99 @@
+---
+# Software installation tasks - Ubuntu equivalents of Windows tools
+
+- name: Install GitHub CLI repository
+  block:
+    - name: Create keyrings directory
+      file:
+        path: /usr/share/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Add GitHub CLI GPG key
+      shell: |
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
+        dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/githubcli-archive-keyring.gpg
+
+    - name: Add GitHub CLI repository
+      apt_repository:
+        repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }} signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main"
+        filename: github-cli
+        state: present
+
+- name: Install Visual Studio Code repository
+  block:
+    - name: Add Microsoft GPG key for VS Code
+      apt_key:
+        url: https://packages.microsoft.com/keys/microsoft.asc
+        state: present
+
+    - name: Add VS Code repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://packages.microsoft.com/repos/code stable main"
+        filename: vscode
+        state: present
+
+- name: Update apt cache after adding repositories
+  apt:
+    update_cache: yes
+
+- name: Install development tools
+  apt:
+    name:
+      - gh                    # GitHub CLI
+      - code                  # Visual Studio Code
+      - python3               # Python 3
+      - python3-pip           # Python package manager
+      - python3-venv          # Python virtual environments
+      - azure-cli             # Azure CLI (if available in repos)
+    state: present
+  ignore_errors: yes  # Some packages might not be available
+
+- name: Install Azure CLI via script (if apt failed)
+  shell: |
+    curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+  args:
+    creates: /usr/bin/az
+  when: ansible_facts.packages['azure-cli'] is not defined
+
+- name: Install Claude Code extension for VS Code
+  become: no
+  shell: code --install-extension anthropic.claude-code --force
+  register: claude_install
+  changed_when: "'successfully installed' in claude_install.stdout"
+  failed_when: false
+
+- name: Check if Chrome is installed
+  stat:
+    path: /usr/bin/google-chrome
+  register: chrome_check
+
+- name: Install Google Chrome
+  block:
+    - name: Download Google Chrome
+      get_url:
+        url: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        dest: /tmp/google-chrome-stable_current_amd64.deb
+        mode: '0644'
+
+    - name: Install Google Chrome
+      apt:
+        deb: /tmp/google-chrome-stable_current_amd64.deb
+        state: present
+
+    - name: Remove Chrome installer
+      file:
+        path: /tmp/google-chrome-stable_current_amd64.deb
+        state: absent
+  when: not chrome_check.stat.exists
+
+- name: Display installed software versions
+  debug:
+    msg:
+      - "Git: {{ ansible_facts.packages['git'][0].version | default('installed') }}"
+      - "GitHub CLI: installed"
+      - "VS Code: installed"
+      - "Python: {{ ansible_facts.python.version.major }}.{{ ansible_facts.python.version.minor }}"
+      - "Google Chrome: installed"

@@ -1,0 +1,16 @@
+---
+# Global variables for Ubuntu Workstation Setup
+
+# Git configuration
+git_user_name: "Matthew McComas"
+git_user_email: "themccomasunit@gmail.com"
+
+# RDP user configuration
+rdp_user: "rdpuser"
+rdp_password: "ChangeMe123!"  # CHANGE THIS TO A SECURE PASSWORD!
+
+# Software versions (can be overridden)
+python_version: "3.13"
+
+# Desktop environment
+desktop_environment: "ubuntu-mate-desktop"

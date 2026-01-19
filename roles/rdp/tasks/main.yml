@@ -1,0 +1,88 @@
+---
+# RDP configuration - xrdp setup with user creation
+
+- name: Install xrdp and related packages
+  apt:
+    name:
+      - xrdp
+      - xorgxrdp
+    state: present
+
+- name: Ensure xrdp service is enabled and started
+  systemd:
+    name: xrdp
+    enabled: yes
+    state: started
+
+- name: Configure xrdp to use MATE desktop
+  lineinfile:
+    path: /etc/xrdp/startwm.sh
+    insertbefore: '^test -x /etc/X11/Xsession'
+    line: |
+      # Start MATE desktop
+      export DESKTOP_SESSION=mate
+      export XDG_CURRENT_DESKTOP=MATE
+    state: present
+
+- name: Allow RDP through firewall (if ufw is active)
+  ufw:
+    rule: allow
+    port: '3389'
+    proto: tcp
+  when: ansible_facts.services['ufw'] is defined
+  ignore_errors: yes
+
+- name: Create RDP user
+  user:
+    name: "{{ rdp_user }}"
+    password: "{{ rdp_password | password_hash('sha512') }}"
+    shell: /bin/bash
+    groups: sudo
+    append: yes
+    create_home: yes
+    state: present
+
+- name: Ensure RDP user home directory exists
+  file:
+    path: "/home/{{ rdp_user }}"
+    state: directory
+    owner: "{{ rdp_user }}"
+    group: "{{ rdp_user }}"
+    mode: '0755'
+
+- name: Create .xsessionrc for RDP user
+  copy:
+    content: |
+      #!/bin/bash
+      export DESKTOP_SESSION=mate
+      export XDG_CURRENT_DESKTOP=MATE
+      exec mate-session
+    dest: "/home/{{ rdp_user }}/.xsessionrc"
+    owner: "{{ rdp_user }}"
+    group: "{{ rdp_user }}"
+    mode: '0755'
+
+- name: Configure Git for RDP user
+  become: yes
+  become_user: "{{ rdp_user }}"
+  git_config:
+    name: "{{ item.name }}"
+    scope: global
+    value: "{{ item.value }}"
+  loop:
+    - { name: 'user.name', value: '{{ git_user_name }}' }
+    - { name: 'user.email', value: '{{ git_user_email }}' }
+  when: git_user_name is defined and git_user_email is defined
+
+- name: Restart xrdp service
+  systemd:
+    name: xrdp
+    state: restarted
+
+- name: Display RDP configuration
+  debug:
+    msg:
+      - "RDP is now configured and running on port 3389"
+      - "RDP User: {{ rdp_user }}"
+      - "Connect using: <server-ip>:3389"
+      - "IMPORTANT: Change the default password in group_vars/all.yml"
