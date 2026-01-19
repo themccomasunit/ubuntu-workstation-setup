@@ -118,7 +118,7 @@ for arg in "$@"; do
 done
 
 # Check if running in a non-interactive session (no TTY)
-if [ ! -t 0 ]; then
+if [ ! -t 0 ] && [ "$AUTO_APPROVE" = false ]; then
     print_warning "Non-interactive session detected. Use --yes flag to auto-approve."
     print_warning "Example: curl -fsSL https://...bootstrap.sh | sudo bash -s -- --yes"
     print_status "Setup cancelled - requires interactive confirmation or --yes flag"
